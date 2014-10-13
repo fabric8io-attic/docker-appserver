@@ -2,9 +2,9 @@
 
 
 DIR=${DEPLOY_DIR:-/maven}
-echo "Checking *.war in $DIR"
+echo "Checking in $DIR"
 if [ -d $DIR ]; then
-  for i in $DIR/; do
+  for i in $DIR/*; do
      file=$(basename $i)
      echo "Linking $i --> /opt/karaf/deploy/$file"
      ln -s $i /opt/karaf/deploy/$file

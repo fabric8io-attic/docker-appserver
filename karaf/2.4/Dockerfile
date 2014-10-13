@@ -32,7 +32,7 @@ RUN rm -rf /opt/karaf/deploy/README
 
 # VOLUME ["/opt/karaf/data", "/tmp/hsperfdata_root"
 
-ENV KARAF_OPTS -javaagent:/opt/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,agentId=cheese
+ENV KARAF_OPTS -javaagent:/opt/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,agentId=$HOSTNAME
 ENV KARAF_HOME /opt/karaf
 ENV PATH $PATH:$KARAF_HOME/bin
 
