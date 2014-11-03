@@ -1,39 +1,25 @@
-FROM java
+FROM jolokia/java-jolokia:8
 
-MAINTAINER roland@jolokia.org
+MAINTAINER fabric8@googlegroups.com
 
 EXPOSE 8181 8101 8778
 
 ENV KARAF_VERSION 2.4.0
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 ENV DEPLOY_DIR /maven
 
-ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
-
-
-RUN wget http://archive.apache.org/dist/karaf/${KARAF_VERSION}/apache-karaf-${KARAF_VERSION}.tar.gz -O /tmp/karaf.tar.gz
-
-# Unpack
-RUN tar xzf /tmp/karaf.tar.gz -C /opt
-RUN ln -s /opt/apache-karaf-${KARAF_VERSION} /opt/karaf
-RUN rm /tmp/karaf.tar.gz
-
-# Add roles
-ADD users.properties /opt/apache-karaf-${KARAF_VERSION}/etc/
+RUN curl -qs https://repo1.maven.org/maven2/org/apache/karaf/apache-karaf/${KARAF_VERSION}/apache-karaf-${KARAF_VERSION}.tar.gz | \
+    tar xz -C /opt && \
+    ln -s /opt/apache-karaf-* /opt/karaf && \
+    useradd -d /opt/karaf -s /sbin/nologin -c "karaf user" karaf && \
+    chown -R karaf:karaf /opt/karaf /opt/apache-karaf-* && \
+    sed -i 's/log4j.rootLogger=INFO, out, osgi:*/log4j.rootLogger=INFO, stdout, osgi:*/' /opt/karaf/etc/org.ops4j.pax.logging.cfg
 
 # Startup script
-ADD deploy-and-run.sh /opt/apache-karaf-${KARAF_VERSION}/bin/
-RUN chmod +x /opt/apache-karaf-${KARAF_VERSION}/bin/deploy-and-run.sh
+ADD deploy-and-run.sh /opt/karaf/bin/
+ADD onbuild.sh /opt/karaf/bin/
 
-# jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/karaf/jolokia-agent.jar
+ONBUILD RUN /opt/karaf/bin/onbuild.sh
 
-# Remove unneeded apps
-RUN rm -rf /opt/karaf/deploy/README 
-
-# VOLUME ["/opt/karaf/data", "/tmp/hsperfdata_root"
-
-ENV KARAF_OPTS -javaagent:/opt/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,authMode=jaas,realm=karaf,user=admin,password=admin,agentId=$HOSTNAME
-ENV KARAF_HOME /opt/karaf
-ENV PATH $PATH:$KARAF_HOME/bin
-
-CMD /opt/karaf/bin/deploy-and-run.sh
+USER karaf
+CMD ["opt/karaf/bin/deploy-and-run.sh"]
