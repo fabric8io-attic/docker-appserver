@@ -21,5 +21,4 @@ ADD onbuild.sh /opt/karaf/bin/
 
 ONBUILD RUN /opt/karaf/bin/onbuild.sh
 
-USER karaf
 CMD ["opt/karaf/bin/deploy-and-run.sh"]
