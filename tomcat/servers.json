@@ -43,15 +43,15 @@
         },
         "6.0": {
             "version": "6.0.41",
-            "toRemove": [ "examples", "docs" ]
+            "toRemove": [ "examples", "docs", "ROOT" ]
         },
         "7.0": {
             "version": "7.0.55",
-            "toRemove": [ "examples", "docs" ]
+            "toRemove": [ "examples", "docs", "ROOT" ]
         },
         "8.0": {
             "version": "8.0.9",
-            "toRemove": [ "examples", "docs" ]
+            "toRemove": [ "examples", "docs", "ROOT" ]
         }
     }
 }
