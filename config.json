@@ -1,13 +1,13 @@
 {
     // Overall base image
-    "javaBaseImage" : "java",
+    "javaBaseImage" : "fabric8/base-sti",
 
     // Path to Java-Home within this image
-    "javaHome" : "/usr/lib/jvm/java-7-openjdk-amd64",
+    "javaHome" : "/usr/lib/jvm/java",
 
     // Java version contained in base image
     "javaVersion": "OpenJDK 1.7.0_60 (7u60-2.5.0-2)",
 
     // Maintainer
-    "maintainer" : "roland@jolokia.org"
+    "maintainer" : "fabric8@googlegroups.com"
 }

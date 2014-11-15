@@ -14,7 +14,8 @@ MAINTAINER {{= it.maintainer }}
 EXPOSE 8181 8101 8778
 
 ENV KARAF_VERSION {{= it.config.version }}
-ENV DEPLOY_DIR /maven
+ENV DEPLOY_DIR /opt/jboss/deploy
+USER jboss
 {{? it.config.useJavaHome}}
 ENV JAVA_HOME {{= it.javaHome }}
 {{?}}
@@ -22,27 +23,25 @@ ENV JAVA_HOME {{= it.javaHome }}
 RUN wget {{= url }} -O /tmp/karaf.tar.gz
 
 # Unpack
-RUN tar xzf /tmp/karaf.tar.gz -C /opt
-RUN ln -s /opt/{{= base }}-${KARAF_VERSION} /opt/karaf
+RUN tar xzf /tmp/karaf.tar.gz -C /opt/jboss
+RUN ln -s /opt/jboss/{{= base }}-${KARAF_VERSION} /opt/jboss/karaf
 RUN rm /tmp/karaf.tar.gz
 
 # Add roles
-ADD {{= roleFile.file}} /opt/{{= base}}-${KARAF_VERSION}/{{= roleFile.dir}}
+ADD {{= roleFile.file}} /opt/jboss/{{= base}}-${KARAF_VERSION}/{{= roleFile.dir}}
 
-# Startup script
-ADD deploy-and-run.sh /opt/{{= base}}-${KARAF_VERSION}/bin/
-RUN chmod +x /opt/{{= base}}-${KARAF_VERSION}/bin/deploy-and-run.sh
+# Startup and usage cript
+ADD ./usage /usr/bin/
+ADD ./deploy-and-start /usr/bin/
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/karaf/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
 
 # Remove unneeded apps
-RUN rm -rf {{~toRemove :value:index}}/opt/karaf/deploy/{{=value}} {{~}}
+RUN rm -rf {{~toRemove :value:index}}/opt/jboss/karaf/deploy/{{=value}} {{~}}
 
-# VOLUME ["/opt/karaf/data", "/tmp/hsperfdata_root"
-
-ENV KARAF_OPTS -javaagent:/opt/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,authMode=jaas,realm=karaf,user=admin,password=admin,agentId=$HOSTNAME
-ENV KARAF_HOME /opt/karaf
+ENV KARAF_OPTS -javaagent:/opt/jboss/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,authMode=jaas,realm=karaf,user=admin,password=admin,agentId=$HOSTNAME
+ENV KARAF_HOME /opt/jboss/karaf
 ENV PATH $PATH:$KARAF_HOME/bin
 
-CMD /opt/karaf/bin/deploy-and-run.sh
+CMD ["/usr/bin/sti-helper"]
