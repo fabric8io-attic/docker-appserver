@@ -24,7 +24,7 @@ ADD tomcat-users.xml /opt/apache-tomcat-${TOMCAT_VERSION}/conf/
 ADD deploy-and-run.sh /opt/apache-tomcat-${TOMCAT_VERSION}/bin/
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/tomcat/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/tomcat/jolokia-agent.jar
 
 # Remove unneeded apps
 RUN rm -rf /opt/tomcat/webapps/jsp-examples /opt/tomcat/webapps/servlets-examples /opt/tomcat/webapps/tomcat-docs /opt/tomcat/webapps/webdav 

@@ -52,15 +52,15 @@ Using Jolokia JVM agent capability to attach to an already running jav process, 
 ```bash
 docker run \
   -P -p 8778 \
-  -v /data/installers/jolokia-jvm-1.2.2-agent.jar:/opt/jolokia/jolokia-jvm-1.2.2-agent.jar \
+  -v /data/installers/jolokia-jvm-1.2.3-agent.jar:/opt/jolokia/jolokia-jvm-1.2.3-agent.jar \
   -it jboss/wildfly  \
   sh -c 'exec /opt/wildfly/bin/standalone.sh  -b 0.0.0.0 -bmanagement 0.0.0.0 &  \
   while ! curl -m 10 http://localhost:8080 ; do echo still down ; sleep 1s ; done ; \
-  java -jar /opt/jolokia/jolokia-jvm-1.2.2-agent.jar --host 0.0.0.0 ".*jboss-modules.*"; \
+  java -jar /opt/jolokia/jolokia-jvm-1.2.3-agent.jar --host 0.0.0.0 ".*jboss-modules.*"; \
   sh'
 ```
 Where:
-- `/data/installers/jolokia-jvm-1.2.2-agent.jar` is a path on your host
+- `/data/installers/jolokia-jvm-1.2.3-agent.jar` is a path on your host
 - `while ! curl -m 10 http://localhost:8080 ; do echo still down ; sleep 1s ; done ;` is needed due to peculiar behavior of Wildfly, classloading and agents. Basically we are just waiting for Wildfly to be up and running.
 - `".*jboss-modules.*"` is a regexp to identify a unique process in the output of `ps ax`
 - instead of using `-v` to inject a host file inside the container you could consider a more portable approach with **Docker data only containers**. See http://www.tech-d.net/2013/12/16/persistent-volumes-with-docker-container-as-volume-pattern/
