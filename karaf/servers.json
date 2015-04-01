@@ -13,7 +13,7 @@
             "mappings": { "__users-noacl.properties" : "users.properties" }
         },
         "2.4": {
-            "version": "2.4.0",
+            "version": "2.4.1",
             "base": "apache-karaf",
             "url": "http://archive.apache.org/dist/karaf/${KARAF_VERSION}/apache-karaf-${KARAF_VERSION}.tar.gz",
             "toRemove": [ "README" ],
@@ -24,7 +24,7 @@
             "mappings" : { "__users-acl.properties" : "users.properties" }
         },
         "3.0": {
-            "version": "3.0.1",
+            "version": "3.0.3",
             "base": "apache-karaf",
             "url": "http://archive.apache.org/dist/karaf/${KARAF_VERSION}/apache-karaf-${KARAF_VERSION}.tar.gz",
             "toRemove": [ "README" ],

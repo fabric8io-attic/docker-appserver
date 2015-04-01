@@ -15,13 +15,9 @@ exposed from a directory */maven*
 
 Features:
 
-* Karaf Version: **3.0.1**
+* Karaf Version: **3.0.3**
 * Java Version: **OpenJDK 1.7.0_60 (7u60-2.5.0-2)** (base image: *fabric8/base-sti*)
 * Port: **8080**
 * User **admin** (Password: **admin**) has been added to access the admin
   applications */host-manager* and */manager*)
 * Documentation and examples have been removed
-* Command: `/opt/tomcat/bin/deploy-and-run.sh` which links .war files from */maven* to 
-  */opt/tomcat/webapps* and then calls `karaf run`
-* Sets `-Djava.security.egd=file:/dev/./urandom` for faster startup times
-  (though a bit less secure)

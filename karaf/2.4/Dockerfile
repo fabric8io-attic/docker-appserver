@@ -4,7 +4,7 @@ MAINTAINER fabric8@googlegroups.com
 
 EXPOSE 8181 8101 8778
 
-ENV KARAF_VERSION 2.4.0
+ENV KARAF_VERSION 2.4.1
 ENV DEPLOY_DIR /opt/jboss/deploy
 USER jboss
 
@@ -30,7 +30,7 @@ ADD org.ops4j.pax.logging.cfg /opt/jboss/apache-karaf-${KARAF_VERSION}/etc/
 
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
 
 # Remove unneeded apps
 RUN rm -rf /opt/jboss/karaf/deploy/README 

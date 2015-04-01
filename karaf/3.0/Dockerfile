@@ -4,7 +4,7 @@ MAINTAINER fabric8@googlegroups.com
 
 EXPOSE 8181 8101 8778
 
-ENV KARAF_VERSION 3.0.1
+ENV KARAF_VERSION 3.0.3
 ENV DEPLOY_DIR /opt/jboss/deploy
 USER jboss
 
@@ -26,7 +26,7 @@ ADD ./usage /usr/bin/
 ADD ./deploy-and-start /usr/bin/
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.2/jolokia-jvm-1.2.2-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
 
 # Remove unneeded apps
 RUN rm -rf /opt/jboss/karaf/deploy/README 
