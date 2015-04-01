@@ -1,24 +1,6 @@
 #!/bin/sh
 
 
-if [ -z "${LOG4J_APPENDER}" ]; then
-    LOG4J_APPENDER="stdout"
-fi
-sed -i "s|LOG4J_APPENDER|${LOG4J_APPENDER}|" /opt/jboss/karaf/etc/org.ops4j.pax.logging.cfg
-
-if [ -n "${LOGSTASH_URL}" ]; then
-    LOGSTASH_URL=${LOGSTASH_URL#*://}
-    LOGSTASH_HOST=${LOGSTASH_URL%:*}
-    LOGSTASH_PORT=${LOGSTASH_URL#*:}
-    sed -i "s|LOGSTASH_HOST|${LOGSTASH_HOST}|" /opt/jboss/karaf/etc/org.ops4j.pax.logging.cfg
-    sed -i "s|LOGSTASH_PORT|${LOGSTASH_PORT}|" /opt/jboss/karaf/etc/org.ops4j.pax.logging.cfg
-elif [ -n "${LOGSTASH_SERVICE_NAME}" ]; then
-    SVC_HOST=${LOGSTASH_SERVICE_NAME}_SERVICE_HOST
-    SVC_PORT=${LOGSTASH_SERVICE_NAME}_SERVICE_PORT
-    sed -i "s|LOGSTASH_HOST|${!SVC_HOST}|" /opt/jboss/karaf/etc/org.ops4j.pax.logging.cfg
-    sed -i "s|LOGSTASH_PORT|${!SVC_PORT}|" /opt/jboss/karaf/etc/org.ops4j.pax.logging.cfg
-fi
-
 DIR=${DEPLOY_DIR:-/opt/jboss/deploy}
 echo "Copying offline repo"
 cp -rf $DIR/fabric8/repository/* /opt/jboss/karaf/system/

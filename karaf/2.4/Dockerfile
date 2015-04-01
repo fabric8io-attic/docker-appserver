@@ -25,10 +25,6 @@ ADD users.properties /opt/jboss/apache-karaf-${KARAF_VERSION}/etc/
 ADD ./usage /usr/bin/
 ADD ./deploy-and-start /usr/bin/
 
-# Add log4j config
-ADD org.ops4j.pax.logging.cfg /opt/jboss/apache-karaf-${KARAF_VERSION}/etc/
-
-
 # jolokia agent
 RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
 
@@ -39,4 +35,4 @@ ENV KARAF_OPTS -javaagent:/opt/jboss/karaf/jolokia-agent.jar=host=0.0.0.0,port=8
 ENV KARAF_HOME /opt/jboss/karaf
 ENV PATH $PATH:$KARAF_HOME/bin
 
-CMD ["/usr/bin/sti-helper"]
+CMD ["/usr/bin/usage"]

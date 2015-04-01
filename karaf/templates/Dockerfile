@@ -44,4 +44,4 @@ ENV KARAF_OPTS -javaagent:/opt/jboss/karaf/jolokia-agent.jar=host=0.0.0.0,port=8
 ENV KARAF_HOME /opt/jboss/karaf
 ENV PATH $PATH:$KARAF_HOME/bin
 
-CMD ["/usr/bin/sti-helper"]
+CMD ["/usr/bin/usage"]
