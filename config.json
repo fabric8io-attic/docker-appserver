@@ -1,4 +1,8 @@
 {
+
+    // Image Prefix
+    "imagePrefix" : "fabric8",
+
     // Overall base image
     "javaBaseImage" : "fabric8/base-sti",
 

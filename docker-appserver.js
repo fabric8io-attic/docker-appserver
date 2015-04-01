@@ -19,7 +19,6 @@ JSON.minify = JSON.minify || require("node-json-minify");
 
 (function() {
     var opts = parseOpts();
-
     // All supported servers which must be present as a sub-directory
     var servers = getServers(opts);
 
@@ -28,7 +27,8 @@ JSON.minify = JSON.minify || require("node-json-minify");
 
     // If desired create Docker images
     if (opts.options.build) {
-        buildImages(servers, opts);
+        var config = getConfig("config.json");
+        buildImages(config, servers, opts);
     }
 })();
 
@@ -116,7 +116,7 @@ function getFragments(path) {
 
 
 
-function buildImages(servers,opts) {
+function buildImages(config, servers,opts) {
     console.log("\n\nBuilding Images\n".cyan);
 
     var docker = new Docker(getDockerConnectionsParams(opts));
@@ -124,7 +124,7 @@ function buildImages(servers,opts) {
     servers.forEach(function(server) {
         console.log(server.magenta);
         var versions = extractVersions(getServersConfig(server),opts.options.version);
-        doBuildImages(docker,server,versions);
+        doBuildImages(config, docker,server,versions);
     });
 }
 
@@ -222,13 +222,14 @@ function getFullVersion(server,version) {
     return config.config[version].version;
 }
 
-function doBuildImages(docker,server,versions) {
+function doBuildImages(config, docker,server,versions) {
     if (versions.length > 0) {
         var version = versions.shift();
         console.log("    " + version.green);
         var tar = child.spawn(tarCmd, ['-c', '.'], { cwd: __dirname + "/" + server + "/" + version });
-        var name = "consol/" + server + "-" + version;
+        var name = config.imagePrefix + "/" + server + "-" + version;
         var fullName = name + ":" + getFullVersion(server,version);
+        console.log(fullName);
         docker.buildImage(
             tar.stdout, { "t": fullName, "forcerm": true, "q": true },
             function (error, stream) {
@@ -237,11 +238,11 @@ function doBuildImages(docker,server,versions) {
                 }
                 stream.pipe(getResponseStream());
                 stream.on('end', function () {
-                    docker.getImage(fullName).tag({repo: name }, function (error, result) {
+                    docker.getImage(fullName).tag({repo: name, force: true}, function (error, result) {
                         if (error) { throw error; }
                         console.log(result);
                     });
-                    doBuildImages(docker,server,versions);
+                    doBuildImages(config, docker,server,versions);
                 });
             });
     }
