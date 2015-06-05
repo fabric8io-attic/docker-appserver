@@ -26,12 +26,12 @@ ADD ./usage /usr/bin/
 ADD ./deploy-and-start /usr/bin/
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.3.1/jolokia-jvm-1.3.1-agent.jar -O /opt/jboss/karaf/jolokia-agent.jar
 
 # Remove unneeded apps
 RUN rm -rf /opt/jboss/karaf/deploy/README 
 
-ENV KARAF_OPTS -javaagent:/opt/jboss/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,authMode=jaas,realm=karaf,user=admin,password=admin,agentId=$HOSTNAME
+ENV KARAF_OPTS -javaagent:/opt/jboss/karaf/jolokia-agent.jar=host=0.0.0.0,port=8778,authMode=jaas,realm=karaf,user=admin,password=admin
 ENV KARAF_HOME /opt/jboss/karaf
 ENV PATH $PATH:$KARAF_HOME/bin
 
