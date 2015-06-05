@@ -4,7 +4,7 @@ MAINTAINER fabric8@googlegroups.com
 
 EXPOSE 8181 8101 8778
 
-ENV KARAF_VERSION 2.4.1
+ENV KARAF_VERSION 2.4.2
 ENV DEPLOY_DIR /opt/jboss/deploy
 USER jboss
 

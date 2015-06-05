@@ -15,7 +15,7 @@ exposed from a directory */maven*
 
 Features:
 
-* Karaf Version: **2.4.1**
+* Karaf Version: **2.4.2**
 * Java Version: **OpenJDK 1.7.0_60 (7u60-2.5.0-2)** (base image: *fabric8/base-sti*)
 * Port: **8080**
 * User **admin** (Password: **admin**) has been added to access the admin
