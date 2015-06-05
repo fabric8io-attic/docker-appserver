@@ -11,25 +11,28 @@ var tarCmd = "tar";
 var child = require('child_process');
 var stream = require('stream');
 
-
 // Set to true for extra debugging
 var DEBUG = false;
 
 JSON.minify = JSON.minify || require("node-json-minify");
 
-(function() {
-    var opts = parseOpts();
-    // All supported servers which must be present as a sub-directory
-    var servers = getServers(opts);
+var globalConfig = getConfig("config.json");
 
-    // Create build files
+function processServers(servers, opts) {
+// Create build files
     createAutomatedBuilds(servers, opts);
 
     // If desired create Docker images
     if (opts.options.build) {
-        var config = getConfig("config.json");
-        buildImages(config, servers, opts);
+        buildImages(servers, opts);
     }
+}
+(function() {
+    var opts = parseOpts();
+
+    // All supported servers which must be present as a sub-directory
+    var servers = getServers(opts);
+    processServers(servers, opts)
 })();
 
 // ===============================================================================
@@ -37,20 +40,16 @@ JSON.minify = JSON.minify || require("node-json-minify");
 function createAutomatedBuilds(servers, opts) {
     console.log("Creating Automated Builds\n".cyan);
 
-    var globalConfig = getConfig("config.json");
     var fragments = getFragments("fragments.txt");
 
     servers.forEach(function (server) {
-        console.log(server.magenta);
-        var config =
-            _.extend({},
-                globalConfig,
-                getServersConfig(server));
+        console.log(server.name.magenta);
+        var config = server.config;
         var versions = extractVersions(config,opts.options.version);
-        execWithTemplates(server, function (templates) {
+        execWithTemplates(server.name, function (templates) {
             versions.forEach(function (version) {
                 console.log("    " + version.green);
-                ensureDir(__dirname + "/" + server + "/" + version);
+                ensureDir(__dirname + "/" + server.name + "/" + version);
                 var changed = false;
                 templates.forEach(function (template) {
                     var file = checkForMapping(config, version, template.file);
@@ -58,16 +57,19 @@ function createAutomatedBuilds(servers, opts) {
                         // Skip any file flagged as being mapped but no mapping was found
                         return;
                     }
+                    var filledFragments = fillFragments(fragments,config);
                     var templateHasChanged =
                         fillTemplate(
-                                server + "/" + version + "/" + file,
+                                server.name + "/" + version + "/" + file,
                             template.templ,
                             _.extend(
                                 {},
                                 config,
-                                {    "version": version,
-                                   "fragments": fragments,
-                                      "config": _.extend({}, config.config['default'], config.config[version])}
+                                {
+                                    "version": version,
+                                    "fragments": filledFragments,
+                                    "config": _.extend({}, config.config['default'], config.config[version])
+                                }
                             ));
                     changed = changed || templateHasChanged;
                 });
@@ -87,6 +89,12 @@ function getConfig(path) {
         config = JSON.parse(JSON.minify(fs.readFileSync(path, "utf8")));
     }
     return config;
+}
+
+function getServerConfig(name) {
+    return _.extend({},
+            globalConfig,
+            JSON.parse(JSON.minify(fs.readFileSync(__dirname + "/" + name + "/config.json", "utf8"))));
 }
 
 function getFragments(path) {
@@ -114,17 +122,26 @@ function getFragments(path) {
     return fragments;
 }
 
+function fillFragments(fragments,config) {
+    var ret = { };
+    for (var key in fragments) {
+        if (fragments.hasOwnProperty(key)) {
+            var template = dot.template(fragments[key]);
+            ret[key] = template(config);
+        }
+    }
+    return ret;
+}
 
-
-function buildImages(config, servers,opts) {
+function buildImages(servers,opts) {
     console.log("\n\nBuilding Images\n".cyan);
 
     var docker = new Docker(getDockerConnectionsParams(opts));
 
     servers.forEach(function(server) {
-        console.log(server.magenta);
-        var versions = extractVersions(getServersConfig(server),opts.options.version);
-        doBuildImages(config, docker,server,versions);
+        console.log(server.name.magenta);
+        var versions = extractVersions(server.config,opts.options.version);
+        doBuildImages(docker,server,versions,opts.options.nocache);
     });
 }
 
@@ -145,8 +162,8 @@ function checkForMapping(config,version,file) {
     }
 }
 
-function execWithTemplates(server,templFunc) {
-    var templ_dir = server + "/templates";
+function execWithTemplates(dir,templFunc) {
+    var templ_dir = dir + "/templates";
     var templates = fs.readdirSync(templ_dir);
     var ret = [];
     templates.forEach(function (template) {
@@ -188,23 +205,22 @@ function ensureDir(dir) {
 
 
 function getServers(opts) {
-    if (opts.options.server) {
-        return _.filter(getAllServers(), function (server) {
+    var serverNames;
+
+    var allServerNames =  _.filter(fs.readdirSync(__dirname), function (f) {
+        return fs.existsSync(f + "/config.json");
+    });
+
+    if (opts && opts.options && opts.options.server) {
+        serverNames = _.filter(allServerNames, function(server) {
             return _.contains(opts.options.server,server);
         });
     } else {
-        return getAllServers();
+        serverNames = allServerNames;
     }
-}
-
-function getAllServers() {
-    return _.filter(fs.readdirSync(__dirname), function (f) {
-        return fs.existsSync(f + "/servers.json");
-    });
-}
-
-function getServersConfig(server) {
-    return JSON.parse(JSON.minify(fs.readFileSync(__dirname + "/" + server + "/servers.json", "utf8")));
+    return _.map(serverNames, function (name) {
+        return { "name": name, "config": getServerConfig(name)};
+    })
 }
 
 function extractVersions(config,versionsFromOpts) {
@@ -217,32 +233,32 @@ function extractVersions(config,versionsFromOpts) {
     }
 }
 
-function getFullVersion(server,version) {
-    var config = getServersConfig(server);
-    return config.config[version].version;
+function getFullVersion(config,version) {
+    var buildVersion = config.buildVersion;
+    return config.config[version].version + (buildVersion ? "-" + buildVersion : "");
 }
 
-function doBuildImages(config, docker,server,versions) {
+function doBuildImages(docker,server,versions,nocache) {
     if (versions.length > 0) {
         var version = versions.shift();
         console.log("    " + version.green);
-        var tar = child.spawn(tarCmd, ['-c', '.'], { cwd: __dirname + "/" + server + "/" + version });
-        var name = config.imagePrefix + "/" + server + "-" + version;
-        var fullName = name + ":" + getFullVersion(server,version);
-        console.log(fullName);
+        var tar = child.spawn(tarCmd, ['-c', '.'], { cwd: __dirname + "/" + server.name + "/" + version });
+        var repoUser = server.config.repoUser + "/" || "";
+        var name = repoUser + server.name + (version !== "0" ? "-" + version : "");
+        var fullName = name + ":" + getFullVersion(server.config,version);
         docker.buildImage(
-            tar.stdout, { "t": fullName, "forcerm": true, "q": true },
+            tar.stdout, { "t": fullName, "forcerm": true, "q": true, "nocache": nocache ? "true" : "false" },
             function (error, stream) {
                 if (error) {
                     throw error;
                 }
                 stream.pipe(getResponseStream());
                 stream.on('end', function () {
-                    docker.getImage(fullName).tag({repo: name, force: true}, function (error, result) {
-                        if (error) { throw error; }
+                    docker.getImage(fullName).tag({repo: name, force: 1}, function (error, result) {
                         console.log(result);
+                        if (error) { throw error; }
                     });
-                    doBuildImages(config, docker,server,versions);
+                    doBuildImages(docker,server,versions,nocache);
                 });
             });
     }
@@ -267,19 +283,38 @@ function getResponseStream() {
     return buildResponseStream;
 }
 
+function addSslIfNeeded(param,opts) {
+    var port = param.port;
+    if (port === "2376") {
+        // Its SSL
+        var options = opts.options;
+        var certPath = options.certPath || process.env.DOCKER_CERT_PATH || process.env.HOME + ".docker";
+        return _.extend(param,{
+            protocol: "https",
+            ca: fs.readFileSync(certPath + '/ca.pem'),
+            cert: fs.readFileSync(certPath + '/cert.pem'),
+            key: fs.readFileSync(certPath + '/key.pem')
+        });
+    } else {
+        return _.extend(param,{
+            protocol: "http"
+        });
+    }
+}
+
 function getDockerConnectionsParams(opts) {
     if (opts.options.host) {
-        return {
-            "host": "http://" + opts.options.host,
+        return addSslIfNeeded({
+            "host": opts.options.host,
             "port": opts.options.port || 2375
-        };
+        },opts);
     } else if (process.env.DOCKER_HOST) {
         var parts = process.env.DOCKER_HOST.match(/^tcp:\/\/(.+?)\:?(\d+)?$/i);
         if (parts !== null) {
-            return {
-                "host" : "http://" + parts[1],
+            return addSslIfNeeded({
+                "host" : parts[1],
                 "port" : parts[2] || 2375
-            };
+            },opts);
         } else {
             return {
                 "socketPath" : process.env.DOCKER_HOST
@@ -287,7 +322,8 @@ function getDockerConnectionsParams(opts) {
         }
     } else {
         return {
-            "host" : "http://localhost",
+            "protocol" : "http",
+            "host" : "localhost",
             "port" : 2375
         };
     }
@@ -308,6 +344,7 @@ function parseOpts() {
         ['b' , 'build', 'Build image(s)'],
         ['d' , 'host', 'Docker hostname (default: localhost)'],
         ['p' , 'port', 'Docker port (default: 2375)'],
+        ['n' , 'nocache', 'Dont cache when building images'],
         ['h' , 'help', 'display this help']
     ]);
 
@@ -321,10 +358,10 @@ function parseOpts() {
         "which can be registered at hub.docker.io\n\n" +
         "It uses templates for covering multiple version of appserver.\n\n" +
         "Supported servers:\n\n";
-    var servers = getAllServers();
+    var servers = getServers();
     servers.forEach(function (server) {
-        var config = getServersConfig(server);
-        help += "   " + server  + ": " + config.versions.join(", ") + "\n";
+        var config = server.config;
+        help += "   " + server.name  + ": " + config.versions.join(", ") + "\n";
     });
 
     return getopt.bindHelp(help).parseSystem();

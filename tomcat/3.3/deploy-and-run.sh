@@ -10,4 +10,5 @@ if [ -d $DIR ]; then
 fi
 # Use faster (though more unsecure) random number generator
 export TOMCAT_OPTS="$TOMCAT_OPTS -Djava.security.egd=file:/dev/./urandom"
+export 
 /opt/tomcat/bin/tomcat run

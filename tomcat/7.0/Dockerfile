@@ -1,19 +1,17 @@
-FROM java
+FROM fabric8/base-sti
 
-MAINTAINER roland@jolokia.org
+MAINTAINER fabric8@googlegroups.com
 
 EXPOSE 8080 8778
 
-ENV TOMCAT_VERSION 7.0.55
+ENV TOMCAT_VERSION 7.0.62
 ENV DEPLOY_DIR /maven
 
 
-RUN wget http://archive.apache.org/dist/tomcat/tomcat-7/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz -O /tmp/catalina.tar.gz
-
-# Unpack
-RUN tar xzf /tmp/catalina.tar.gz -C /opt
-RUN ln -s /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat
-RUN rm /tmp/catalina.tar.gz
+USER root
+# Get and Unpack Tomcat
+RUN wget http://archive.apache.org/dist/tomcat/tomcat-7/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz -O /tmp/catalina.tar.gz && tar xzf /tmp/catalina.tar.gz -C /opt && ln -s /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat && rm /tmp/catalina.tar.gz && chown -R jboss:jboss /opt/tomcat/
+USER jboss
 
 # Add roles
 ADD tomcat-users.xml /opt/apache-tomcat-${TOMCAT_VERSION}/conf/
@@ -22,14 +20,14 @@ ADD tomcat-users.xml /opt/apache-tomcat-${TOMCAT_VERSION}/conf/
 ADD deploy-and-run.sh /opt/apache-tomcat-${TOMCAT_VERSION}/bin/
 
 # jolokia agent
-RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.2.3/jolokia-jvm-1.2.3-agent.jar -O /opt/tomcat/jolokia-agent.jar
+RUN wget http://central.maven.org/maven2/org/jolokia/jolokia-jvm/1.3.1/jolokia-jvm-1.3.1-agent.jar -O /opt/tomcat/jolokia-agent.jar
 
 # Remove unneeded apps
 RUN rm -rf /opt/tomcat/webapps/examples /opt/tomcat/webapps/docs /opt/tomcat/webapps/ROOT 
 
 # VOLUME ["/opt/tomcat/logs", "/opt/tomcat/work", "/opt/tomcat/temp", "/tmp/hsperfdata_root"
 
-ENV CATALINA_OPTS -javaagent:/opt/tomcat/jolokia-agent.jar=host=0.0.0.0,port=8778,agentId=$HOSTNAME
+ENV CATALINA_OPTS -javaagent:/opt/tomcat/jolokia-agent.jar=host=0.0.0.0,port=8778
 ENV CATALINA_HOME /opt/tomcat
 ENV PATH $PATH:$CATALINA_HOME/bin
 

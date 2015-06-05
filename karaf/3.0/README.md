@@ -21,3 +21,7 @@ Features:
 * User **admin** (Password: **admin**) has been added to access the admin
   applications */host-manager* and */manager*)
 * Documentation and examples have been removed
+* Command: `/opt/tomcat/bin/deploy-and-run.sh` which links .war files from */maven* to 
+  */opt/tomcat/webapps* and then calls `karaf run`
+* Sets `-Djava.security.egd=file:/dev/./urandom` for faster startup times
+  (though a bit less secure)
